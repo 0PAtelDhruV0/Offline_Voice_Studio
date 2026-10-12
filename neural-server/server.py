@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 import edge_tts
 
@@ -46,7 +46,4 @@ async def tts(req: Request):
                 raise HTTPException(502, "Neural speech service unavailable")
             chunks.append(path.read_bytes())
         # MP3 frame streams can be concatenated for basic playback; for gapless audio use FFmpeg.
-        output = Path(tmp) / "output.mp3"
-        output.write_bytes(b"".join(chunks))
-        return FileResponse(str(output), media_type="audio/mpeg", filename="french-voice.mp3",
-                            background=__import__("starlette.background", fromlist=["BackgroundTask"]).BackgroundTask(lambda: None))
+        return Response(content=b"".join(chunks), media_type="audio/mpeg", headers={"Content-Disposition": "attachment; filename=french-voice.mp3"})
